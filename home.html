@@ -16,7 +16,7 @@
 				console.dir("set", target, prop, receiver);
 				if (prop == "status") {
 					target.status = receiver;
-					document.getElementById("showstatus").innerHTML = `Status: ${target.status}`;
+					document.getElementById("showstatus").innerHTML = `Status: ${target.status}, ${conn?.readyState}`;
 
 					const btnSubmit = document.querySelector("input[type=submit]");
 					if (target.status == 1) {
@@ -85,12 +85,17 @@
 			conn.onmessage = function (evt) {
 				var messages = evt.data.split('\n');
 				for (var i = 0; i < messages.length; i++) {
-					var item = document.createElement("div");
-					item.innerText = messages[i];
-					appendLog(item);
+					appendMsg(messages[i])
 				}
 			};
 			return conn;
+		}
+
+		function appendMsg(msg) {
+			var item = document.createElement("div");
+			item.classList.add("msg");
+			item.innerText = msg;
+			appendLog(item);
 		}
 
 		function logItem(msg) {
@@ -117,12 +122,12 @@
 			min-height: 100%;
 			display: flex;
 			flex-direction: column;
-			background-image: linear-gradient(to bottom, #cceedd, #aa99aa);
+			background-image: linear-gradient(to bottom, #565, #89a);
 			font-family: Verdana, Geneva, Tahoma, sans-serif;
 		}
 
 		#log {
-			background: white;
+			background-color: #e8e8d4;
 			margin: 1rem;
 			padding: 0.5em 0.5em 0.5em 0.5em;
 			flex-grow: 10;
@@ -143,7 +148,34 @@
 			flex-grow: 10;
 		}
 
-		#form input {}
+		#form input,
+		button {
+			font-size: 1rem;
+
+		}
+
+		button {
+			padding: 5px;
+			border: 1px solid gray;
+			border-radius: 5px;
+			background-color: lightgray;
+		}
+
+		.msg {
+			background-color: #ffeeaa;
+			border: 1px solid goldenrod;
+			padding: 10px;
+			margin: 5px;
+			margin-right: 30px;
+			border-radius: 0 15px 15px 15px;
+		}
+
+		.msg.own {
+			background-color: #fffffa;
+			border-radius: 15px 0 15px 15px;
+			margin: 5px;
+			margin-left: 30px;
+		}
 	</style>
 </head>
 
