@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>Chat Example</title>
+	<script type="text/javascript">
+		const WS_URL = "ws://" + document.location.host + "/ws";
+		var log;
+		var msg;
+		var conn;
+		const target = {
+			status: false
+		};
+		var proxyStatus = new Proxy(target, {
+			set(target, prop, receiver) {
+				console.dir("set", target, prop, receiver);
+				if (prop == "status") {
+					target.status = receiver;
+					document.getElementById("showstatus").innerHTML = `Status: ${target.status}`;
+
+					const btnSubmit = document.querySelector("input[type=submit]");
+					if (target.status == 1) {
+						btnSubmit.removeAttribute("disabled");
+					} else {
+						btnSubmit.setAttribute("disabled", true);
+					}
+				}
+			},
+			get(target, prop, receiver) {
+				console.dir("get", false);
+			},
+		});
+
+		function appendLog(item) {
+			var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
+			log.appendChild(item);
+			if (doScroll) {
+				log.scrollTop = log.scrollHeight - log.clientHeight;
+			}
+		}
+
+		window.onload = function () {
+			msg = document.getElementById("msg");
+			log = document.getElementById("log");
+
+
+			document.getElementById("form").onsubmit = function () {
+				if (!conn) {
+					return false;
+				}
+				if (!msg.value) {
+					return false;
+				}
+				conn.send(msg.value);
+				msg.value = "";
+				return false;
+			};
+
+			document.getElementById("btnconnect").addEventListener("click", () => {
+				if (!conn) {
+					conn = connect();
+				}
+			});
+			document.getElementById("btndisconnect").addEventListener("click", () => {
+				if (conn) {
+					conn.close(1000); // normal closure
+					conn = null; // TODO: with object status
+				}
+			});
+
+			if (!window.WebSocket) {
+				var item = document.createElement("div");
+				item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+				appendLog(item);
+				return;
+			}
+			// conn = connect();
+			proxyStatus.status = 0;
+		};
+
+		function connect() {
+			const conn = new WebSocket(WS_URL);
+			conn.onclose = () => {appendLog(logItem("Connection closed.")); proxyStatus.status = 0;}
+			conn.onopen = () => {appendLog(logItem("Connection open.")); proxyStatus.status = 1;}
+			conn.onmessage = function (evt) {
+				var messages = evt.data.split('\n');
+				for (var i = 0; i < messages.length; i++) {
+					var item = document.createElement("div");
+					item.innerText = messages[i];
+					appendLog(item);
+				}
+			};
+			return conn;
+		}
+
+		function logItem(msg) {
+			let item = document.createElement("div");
+			item.innerHTML = `<strong>${msg}</strong>`;
+			return item;
+		}
+
+	</script>
+	<style type="text/css">
+		html,
+		body {
+			height: 100%;
+		}
+
+		html {
+			overflow: hidden;
+		}
+
+		body {
+			padding: 0;
+			margin: 0;
+			width: 100%;
+			min-height: 100%;
+			display: flex;
+			flex-direction: column;
+			background-image: linear-gradient(to bottom, #cceedd, #aa99aa);
+			font-family: Verdana, Geneva, Tahoma, sans-serif;
+		}
+
+		#log {
+			background: white;
+			margin: 1rem;
+			padding: 0.5em 0.5em 0.5em 0.5em;
+			flex-grow: 10;
+			overflow: auto;
+			border: 1px solid lightgray;
+			border-radius: 5px;
+			box-shadow: 2px 2px 4px lightgray inset;
+		}
+
+		#form {
+			padding: 0.2rem;
+			margin: 1rem;
+			overflow: hidden;
+			display: flex;
+		}
+
+		#msg {
+			flex-grow: 10;
+		}
+
+		#form input {}
+	</style>
+</head>
+
+<body>
+	<nav>
+		<button id="btnconnect">Connect</button>
+		<button id="btndisconnect">Disconnect</button>
+		<span id="showstatus"></span>
+	</nav>
+	<div id="log"></div>
+	<form id="form">
+		<input type="text" id="msg" size="64" autofocus />
+		<input type="submit" value="Send" />
+	</form>
+</body>
+
+</html>
